@@ -16,6 +16,8 @@ func main() {
 	totalQuestions := 0
 	correctAnswers := 0
 
+	answerChan := make(chan string)
+
 	questionsFile, timer := checkFlags()
 	// open the csv file 
 	file, fileErr := os.Open(questionsFile)
@@ -28,6 +30,8 @@ func main() {
 		quizTimer := time.NewTimer( time.Duration(timer) * time.Second)
 		
 		for start := time.Now(); time.Since(start) < time.Duration(timer) * time.Second;{
+
+			
 			// read a question and print it 
 			line, err := r.Read()
 			if err != nil {
@@ -39,18 +43,25 @@ func main() {
 			}
 			
 			totalQuestions += 1 	// increment the question count
-			var userAnswerInput string
-
+			
+			
 			fmt.Printf("Ques %v: %v \n",totalQuestions, line[0])
-			fmt.Printf("Your Answer Answer : ")
-			fmt.Scan(&userAnswerInput)
+			// take input from user as a go routine
+			go getUserAnswer(answerChan)
+			select {
+			case <- quizTimer.C:
+				fmt.Println(" \n Your time is up")
+				displayResult(totalQuestions, correctAnswers)
+				return
+			
+			case userAnswerInput := <- answerChan :
+				// format the input and the file answer for comparison
+				userResult := formatComparison(userAnswerInput)
+				correctResult := formatComparison(line[1])
 
-			// format the input and the file answer for comparison
-			userResult := formatComparison(userAnswerInput)
-			correctResult := formatComparison(line[1])
-
-			if(userResult == correctResult){
-				correctAnswers +=1
+				if(userResult == correctResult){
+					correctAnswers +=1
+				}
 			}
 		}
 	}
@@ -89,4 +100,12 @@ func displayResult( totalQues int, correctAns int) {
 	fmt.Println("##########################")
 	fmt.Printf("Your SCORE : %v / %v \n", correctAns, totalQues)
 	fmt.Println("##########################")
+}
+
+func getUserAnswer(answerChan chan string){
+	var userAnswerInput string
+	fmt.Printf("Your Answer here : ")
+	fmt.Scan(&userAnswerInput)
+
+	answerChan <- userAnswerInput
 }

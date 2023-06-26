@@ -29,9 +29,7 @@ func main() {
 
 		quizTimer := time.NewTimer( time.Duration(timer) * time.Second)
 		
-		for start := time.Now(); time.Since(start) < time.Duration(timer) * time.Second;{
-
-			
+		for{
 			// read a question and print it 
 			line, err := r.Read()
 			if err != nil {

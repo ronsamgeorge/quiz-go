@@ -24,6 +24,8 @@ func main() {
 	if (fileExists){
 		// reader for the csv file
 		r := csv.NewReader(file)
+
+		quizTimer := time.NewTimer( time.Duration(timer) * time.Second)
 		
 		for start := time.Now(); time.Since(start) < time.Duration(timer) * time.Second;{
 			// read a question and print it 

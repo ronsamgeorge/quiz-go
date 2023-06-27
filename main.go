@@ -4,16 +4,20 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"time"
 )
 
+type questionaire struct {
+	ques string
+	ans string
+}
+
 func main() {
 	fmt.Println("Welcome to the Quiz app")
 
-	totalQuestions := 0
+	var totalQuestions int
 	correctAnswers := 0
 	answerChan := make(chan string)
 	questionsFile, timer := checkFlags()
@@ -27,22 +31,17 @@ func main() {
 		// reader for the csv file
 		r := csv.NewReader(file)
 		quizTimer := time.NewTimer( time.Duration(timer) * time.Second)
+		lines,_ := r.ReadAll()
+		listOfQuestions := createQuestionaire(lines)
+		totalQuestions = len(listOfQuestions)
 		
-		for{
+		for index, question := range listOfQuestions{
 			// read a question and print it 
-			line, err := r.Read()
-			if err != nil {
-				// exit if end of file
-				if err == io.EOF {
-					break
-				}
-				fmt.Println("error reading the file")
-			}
-			
-			totalQuestions += 1 	// increment the question count
-			fmt.Printf("Ques %v: %v \n",totalQuestions, line[0])
+			fmt.Printf("Ques %v: %v \n",(index+1), question.ques)
+
 			// take input from user as a go routine
 			go getUserAnswer(answerChan)
+
 			select {
 			case <- quizTimer.C:
 				fmt.Println(" \n Your time is up")
@@ -52,7 +51,7 @@ func main() {
 			case userAnswerInput := <- answerChan :
 				// format the input and the file answer for comparison
 				userResult := formatComparison(userAnswerInput)
-				correctResult := formatComparison(line[1])
+				correctResult := formatComparison(question.ans)
 
 				if(userResult == correctResult){
 					correctAnswers +=1
@@ -67,8 +66,6 @@ func main() {
 
 
 func checkFlags() (string, int) {
-	// check for filen provided using the flag , for questionaire
-	// if no flag provided, default to problems.csv
 	fileFlag := flag.String("f", "problems.csv", "Change the file for the questionaire")
 	timeFlag := flag.Int("t", 30, "set time for quiz")
 	flag.Parse()
@@ -102,4 +99,14 @@ func getUserAnswer(answerChan chan string){
 	fmt.Printf("Your Answer here : ")
 	fmt.Scan(&userAnswerInput)
 	answerChan <- userAnswerInput
+}
+
+func createQuestionaire(lines [][]string) []questionaire {
+	var questions []questionaire
+
+	for _,line := range lines {
+		question := questionaire{ques: line[0], ans: line[1]}
+		questions = append(questions, question)
+	}
+	return questions
 }

@@ -15,10 +15,10 @@ func main() {
 
 	totalQuestions := 0
 	correctAnswers := 0
-
 	answerChan := make(chan string)
-
 	questionsFile, timer := checkFlags()
+
+
 	// open the csv file 
 	file, fileErr := os.Open(questionsFile)
 	fileExists := checkFileExists(fileErr)
@@ -26,7 +26,6 @@ func main() {
 	if (fileExists){
 		// reader for the csv file
 		r := csv.NewReader(file)
-
 		quizTimer := time.NewTimer( time.Duration(timer) * time.Second)
 		
 		for{
@@ -41,8 +40,6 @@ func main() {
 			}
 			
 			totalQuestions += 1 	// increment the question count
-			
-			
 			fmt.Printf("Ques %v: %v \n",totalQuestions, line[0])
 			// take input from user as a go routine
 			go getUserAnswer(answerChan)
@@ -104,6 +101,5 @@ func getUserAnswer(answerChan chan string){
 	var userAnswerInput string
 	fmt.Printf("Your Answer here : ")
 	fmt.Scan(&userAnswerInput)
-
 	answerChan <- userAnswerInput
 }
